@@ -1,0 +1,18 @@
+[
+    {
+        "empresa_id": "empresa_d",
+        "payload": {
+            "carrier": "Horizonte",
+            "from": "Sao Paulo",
+            "to": "Rio de Janeiro",
+            "departure": "2026-07-15 06:30:00",
+            "arrival": "2026-07-15 12:00:00",
+            "fare": {
+                "amount": 8950,
+                "currency": "BRL",
+                "unit": "cents"
+            }
+        },
+        "erro": "Não foi possível parsear a data '2026-07-15 06:30:00'. Formatos suportados: ['%Y-%m-%d %H:%M', '%Y-%m-%dT%H:%M:%S', '%d/%m/%Y %H:%M', '%d-%m-%Y %H:%M', '%d.%m.%Y %H:%M']"
+    }
+]

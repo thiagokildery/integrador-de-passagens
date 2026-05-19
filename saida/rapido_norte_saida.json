@@ -1,0 +1,10 @@
+[
+    {
+        "empresa": "Rapido Norte",
+        "origem": "Fortaleza",
+        "destino": "Recife",
+        "horario_saida": "2026-06-10 08:00",
+        "horario_chegada": "2026-06-10 18:30",
+        "valor": 199.9
+    }
+]

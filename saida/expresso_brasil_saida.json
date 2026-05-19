@@ -1,0 +1,10 @@
+[
+    {
+        "empresa": "Expresso Brasil",
+        "origem": "Fortaleza",
+        "destino": "Natal",
+        "horario_saida": "2026-06-11 07:00",
+        "horario_chegada": "2026-06-11 15:20",
+        "valor": 149.5
+    }
+]

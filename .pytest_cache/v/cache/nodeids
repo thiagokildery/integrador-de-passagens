@@ -1,0 +1,5 @@
+[
+  "tests/test.py::TestSistemaCompleto::test_auto_descoberta_e_exportacao_completa",
+  "tests/test.py::TestSistemaCompleto::test_erros_capturados_sem_interromper_sistema",
+  "tests/test.py::TestSistemaCompleto::test_integracao_completa_todas_empresas"
+]

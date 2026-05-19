@@ -1,0 +1,175 @@
+"""
+Teste 1 — Integração completa de todas as empresas.
+
+Carrega conversores e payloads automaticamente da pasta data/,
+integra tudo e verifica se cada passagem foi convertida corretamente:
+empresa, origem, destino, datas parseadas e valores convertidos.
+
+Estrutura AAA (Arrange, Act, Assert):
+    - Arrange: prepara o cenário do teste
+    - Act: executa a ação que se quer testar
+    - Assert: verifica se o resultado é o esperado
+"""
+
+import sys
+import os
+import json
+import unittest
+from datetime import datetime
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from converters import ConverterRegistry, descobrir_conversores
+from integrador import IntegradorPassagens
+from models.passagem import Passagem
+from utils.date_utils import parsear_data
+from utils.money_utils import parsear_valor_monetario, centavos_para_real
+
+
+def descobrir_payloads(diretorio):
+    """
+    Descobre automaticamente todos os arquivos .json no diretório,
+    igual ao app.py faz. Retorna um dict {empresa_id: [payloads]}.
+    """
+    payloads = {}
+    if not os.path.isdir(diretorio):
+        return payloads
+    for nome_arquivo in sorted(os.listdir(diretorio)):
+        if nome_arquivo.endswith(".json") and nome_arquivo != "invalidos.json":
+            empresa_id = nome_arquivo.replace(".json", "")
+            caminho = os.path.join(diretorio, nome_arquivo)
+            with open(caminho, "r", encoding="utf-8") as f:
+                payloads[empresa_id] = json.load(f)
+    return payloads
+
+
+class TestIntegracaoCompleta(unittest.TestCase):
+    """Teste de integração — valida que cada empresa converteu corretamente."""
+
+    def setUp(self):
+        """Arrange: configura o integrador e descobre payloads automaticamente."""
+        self.registry = ConverterRegistry()
+        for conversor_cls in descobrir_conversores():
+            self.registry.registrar(conversor_cls())
+
+        self.integrador = IntegradorPassagens(self.registry)
+
+        diretorio_data = os.path.join(os.path.dirname(__file__), "..", "data")
+        self.payloads = descobrir_payloads(diretorio_data)
+
+    def test_integracao_completa_todas_empresas(self):
+        """
+        Teste: integrar todos os payloads da pasta data/ deve retornar
+        passagens com dados convertidos corretamente — empresa, origem,
+        destino, datas padronizadas para datetime e valores convertidos.
+
+        Arrange: payloads descobertos automaticamente da pasta data/.
+        Act: chama integrar_todos com os payloads.
+        Assert: para cada empresa, verifica se os campos foram mapeados
+                corretamente, as datas viraram datetime com os valores
+                esperados, e os valores monetários foram convertidos.
+        """
+        # Act
+        passagens = self.integrador.integrar_todos(self.payloads)
+
+        # Assert - pelo menos uma passagem
+        self.assertGreater(len(passagens), 0, "Deve retornar pelo menos uma passagem")
+
+        # Assert - todas são objetos Passagem com campos preenchidos
+        for p in passagens:
+            self.assertIsInstance(p, Passagem)
+            self.assertTrue(len(p.empresa) > 0, "Empresa não pode ser vazia")
+            self.assertTrue(len(p.origem) > 0, "Origem não pode ser vazia")
+            self.assertTrue(len(p.destino) > 0, "Destino não pode ser vazio")
+            self.assertIsInstance(p.horario_saida, datetime)
+            self.assertIsInstance(p.horario_chegada, datetime)
+            self.assertIsInstance(p.valor, float)
+            self.assertGreater(p.valor, 0, "Valor deve ser positivo")
+
+        # Assert - datas de chegada são posteriores às de saída
+        for p in passagens:
+            self.assertGreater(p.horario_chegada, p.horario_saida,
+                               "Chegada deve ser depois da saída")
+
+        # Assert - valida conversão empresa por empresa usando os payloads originais
+        # Cada empresa tem um formato diferente, então validamos que o mapeamento
+        # e a conversão (datas, valores) funcionaram corretamente
+
+        if "empresa_a" in self.payloads:
+            # Empresa A: campos diretos, data ISO, valor float
+            payload = self.payloads["empresa_a"][0]
+            p = self.integrador.integrar("empresa_a", payload)
+            self.assertIsNotNone(p)
+            self.assertEqual(p.empresa, payload["empresa"])
+            self.assertEqual(p.origem, payload["origem"])
+            self.assertEqual(p.destino, payload["destino"])
+            self.assertEqual(p.horario_saida, parsear_data(payload["saida"]))
+            self.assertEqual(p.horario_chegada, parsear_data(payload["chegada"]))
+            self.assertAlmostEqual(p.valor, payload["valor"], places=2)
+
+        if "empresa_b" in self.payloads:
+            # Empresa B: campos renomeados, data ISO com T, valor dict com moeda
+            payload = self.payloads["empresa_b"][0]
+            p = self.integrador.integrar("empresa_b", payload)
+            self.assertIsNotNone(p)
+            self.assertEqual(p.empresa, payload["nome_empresa"])
+            self.assertEqual(p.origem, payload["cidade_origem"])
+            self.assertEqual(p.destino, payload["cidade_destino"])
+            self.assertEqual(p.horario_saida, parsear_data(payload["horario_saida"]))
+            self.assertEqual(p.horario_chegada, parsear_data(payload["horario_chegada"]))
+            self.assertAlmostEqual(p.valor, payload["preco_passagem"]["valor"], places=2)
+
+        if "empresa_c" in self.payloads:
+            # Empresa C: campos aninhados, data BR com barra, valor em centavos
+            payload = self.payloads["empresa_c"][0]
+            p = self.integrador.integrar("empresa_c", payload)
+            self.assertIsNotNone(p)
+            self.assertEqual(p.empresa, payload["viacao"])
+            self.assertEqual(p.origem, payload["rota"]["inicio"])
+            self.assertEqual(p.destino, payload["rota"]["fim"])
+            self.assertEqual(p.horario_saida, parsear_data(payload["horarios"]["saida"]))
+            self.assertEqual(p.horario_chegada, parsear_data(payload["horarios"]["chegada"]))
+            self.assertAlmostEqual(p.valor, centavos_para_real(payload["valor_centavos"]), places=2)
+
+        if "empresa_d" in self.payloads:
+            # Empresa D: campos em inglês, data ISO com segundos, centavos
+            payload = self.payloads["empresa_d"][0]
+            p = self.integrador.integrar("empresa_d", payload)
+            self.assertIsNotNone(p)
+            self.assertEqual(p.empresa, payload["carrier"])
+            self.assertEqual(p.origem, payload["from"])
+            self.assertEqual(p.destino, payload["to"])
+            self.assertEqual(p.horario_saida, parsear_data(payload["departure"]))
+            self.assertEqual(p.horario_chegada, parsear_data(payload["arrival"]))
+            self.assertAlmostEqual(p.valor, centavos_para_real(payload["fare"]["amount"]), places=2)
+
+        if "empresa_e" in self.payloads:
+            # Empresa E: trajeto aninhado, data BR com barra, centavos
+            payload = self.payloads["empresa_e"][0]
+            p = self.integrador.integrar("empresa_e", payload)
+            self.assertIsNotNone(p)
+            self.assertEqual(p.empresa, payload["nome_comercial"])
+            self.assertEqual(p.origem, payload["trajeto"]["partida"])
+            self.assertEqual(p.destino, payload["trajeto"]["chegada"])
+            self.assertEqual(p.horario_saida, parsear_data(payload["partida"]))
+            self.assertEqual(p.horario_chegada, parsear_data(payload["retorno"]))
+            self.assertAlmostEqual(p.valor, centavos_para_real(payload["preco_centavos"]), places=2)
+
+        if "empresa_f" in self.payloads:
+            # Empresa F: campos separados, data BR com traço, pagamento aninhado
+            payload = self.payloads["empresa_f"][0]
+            p = self.integrador.integrar("empresa_f", payload)
+            self.assertIsNotNone(p)
+            self.assertEqual(p.empresa, payload["companhia"])
+            self.assertEqual(p.origem, payload["trajeto_origem"])
+            self.assertEqual(p.destino, payload["trajeto_destino"])
+            self.assertEqual(p.horario_saida, parsear_data(payload["data_ida"]))
+            self.assertEqual(p.horario_chegada, parsear_data(payload["data_volta"]))
+            self.assertAlmostEqual(p.valor, payload["pagamento"]["total_reais"], places=2)
+
+        # Assert - nenhum erro com payloads válidos
+        self.assertEqual(len(self.integrador.obter_erros()), 0)
+
+
+if __name__ == "__main__":
+    unittest.main()

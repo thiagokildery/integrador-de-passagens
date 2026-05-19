@@ -1,0 +1,12 @@
+[
+    {
+        "nome_comercial": "Viação Estrela",
+        "trajeto": {
+            "partida": "Brasilia",
+            "chegada": "Goiania"
+        },
+        "partida": "15/07/2026 14:00",
+        "retorno": "15/07/2026 18:30",
+        "preco_centavos": 12500
+    }
+]

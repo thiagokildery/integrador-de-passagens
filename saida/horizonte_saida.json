@@ -1,0 +1,10 @@
+[
+    {
+        "empresa": "Horizonte",
+        "origem": "Sao Paulo",
+        "destino": "Rio de Janeiro",
+        "horario_saida": "2026-07-15 06:30",
+        "horario_chegada": "2026-07-15 12:00",
+        "valor": 89.5
+    }
+]

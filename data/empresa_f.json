@@ -1,0 +1,12 @@
+[
+    {
+        "companhia": "Viacao Lua",
+        "trajeto_origem": "Brasilia",
+        "trajeto_destino": "Goiania",
+        "data_ida": "15-07-2026 14:00",
+        "data_volta": "15-07-2026 18:30",
+        "pagamento": {
+            "total_reais": 125.00
+        }
+    }
+]

@@ -1,0 +1,14 @@
+[
+    {
+        "carrier": "Horizonte",
+        "from": "Sao Paulo",
+        "to": "Rio de Janeiro",
+        "departure": "2026-07-15 06:30:00",
+        "arrival": "2026-07-15 12:00:00",
+        "fare": {
+            "amount": 8950,
+            "currency": "BRL",
+            "unit": "cents"
+        }
+    }
+]

@@ -1,0 +1,13 @@
+[
+    {
+        "nome_empresa": "Expresso Brasil",
+        "cidade_origem": "Fortaleza",
+        "cidade_destino": "Natal",
+        "horario_saida": "2026-06-11T07:00:00",
+        "horario_chegada": "2026-06-11T15:20:00",
+        "preco_passagem": {
+            "valor": 149.50,
+            "moeda": "BRL"
+        }
+    }
+]

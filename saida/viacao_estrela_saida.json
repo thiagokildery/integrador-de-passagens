@@ -1,0 +1,10 @@
+[
+    {
+        "empresa": "Viação Estrela",
+        "origem": "Brasilia",
+        "destino": "Goiania",
+        "horario_saida": "2026-07-15 14:00",
+        "horario_chegada": "2026-07-15 18:30",
+        "valor": 125.0
+    }
+]
